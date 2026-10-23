@@ -1,33 +1,65 @@
 <!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading assets...</title>
+    <title>Loading...</title>
+    <style>
+        /* Estilos para os avisos de carregamento */
+        .aviso-carregando { font-family: Arial, sans-serif; text-align: center; padding: 20px; color: #666; }
+        .erro-carregamento { color: red; font-weight: bold; padding: 10px; border: 1px solid red; margin: 10px; }
+    </style>
 </head>
 <body>
 
+    <div id="conteudo-unificado">
+        <p class="aviso-carregando" id="status">Loading Files...</p>
+    </div>
+
     <script>
-        async function juntarPaginas() {
+        async function carregarEExecutar() {
+            const container = document.getElementById('conteudo-unificado');
+            const arquivos = ['1.html', '2.html', '3.html', '4.html'];
+            let htmlFinal = "";
+
             try {
+                for (let arquivo of arquivos) {
+                    const resposta = await fetch(arquivo);
+                    if (!resposta.ok) throw new Error(`Error: ${arquivo}`);
+                    
+                    let texto = await resposta.text();
 
-                const [resp1, resp2] = await Promise.all([
-                    fetch('1.html'),
-                    fetch('2.html')
-                ]);
+                    // Limpa as tags estruturais para não quebrar a página principal
+                    texto = texto.replace(/<!DOCTYPE html>/gi, '')
+                                 .replace(/<html[^>]*>/gi, '')
+                                 .replace(/<\/html>/gi, '')
+                                 .replace(/<head[^>]*>[\s\S]*<\/head>/gi, '') // Remove heads duplicados
+                                 .replace(/<body[^>]*>/gi, '')
+                                 .replace(/<\/body>/gi, '');
 
-                const html1 = await resp1.text();
-                const html2 = await resp2.text();
+                    htmlFinal += `<!-- Start - ${arquivo} -->\n${texto}\n<!-- End - ${arquivo} -->\n`;
+                }
 
+                // Injeta e executa todo o HTML combinado na página
+                container.innerHTML = htmlFinal;
 
-                const container = document.getElementById('conteudo');
-                container.innerHTML = html1 + html2;
+                // Executa scripts que porventura existam nos arquivos carregados
+                container.querySelectorAll('script').forEach(script => {
+                    const novoScript = document.createElement('script');
+                    Array.from(script.attributes).forEach(attr => novoScript.setAttribute(attr.name, attr.value));
+                    novoScript.appendChild(document.createTextNode(script.innerHTML));
+                    script.parentNode.replaceChild(novoScript, script);
+                });
+
             } catch (erro) {
-                document.getElementById('conteudo').innerText = '<h1>Error ):</h1><hr><pre>there was an error while loading assets. Try again later.</pre>';
-                console.error(erro);
+                container.innerHTML = `<div class="erro-carregamento">
+                    Error ${erro.message}<br>
+                </div>`;
             }
         }
 
-        juntarPaginas();
+        // Executa a função assim que a página abre
+        carregarEExecutar();
     </script>
+
 </body>
 </html>
