@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading assets...</title>
+</head>
+<body>
+
+    <script>
+        async function juntarPaginas() {
+            try {
+
+                const [resp1, resp2] = await Promise.all([
+                    fetch('1.html'),
+                    fetch('2.html')
+                ]);
+
+                const html1 = await resp1.text();
+                const html2 = await resp2.text();
+
+
+                const container = document.getElementById('conteudo');
+                container.innerHTML = html1 + html2;
+            } catch (erro) {
+                document.getElementById('conteudo').innerText = '<h1>Error ):</h1><hr><pre>there was an error while loading assets. Try again later.</pre>';
+                console.error(erro);
+            }
+        }
+
+        juntarPaginas();
+    </script>
+</body>
+</html>
